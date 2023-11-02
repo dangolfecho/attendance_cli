@@ -126,7 +126,7 @@ def facultyMenu():
                 mycursor.execute(stat1 % dept_id)
                 dname = (mycursor.fetchone())[0]
                 timetable[day][slot-1] = "YEAR" + str(year) + " " + dname + " " + course 
-            head = [1, 2, 3, 4, 5, 6, 7]
+            head = ['DAY', 1, 2, 3, 4, 5, 6, 7]
             tab = []
             for i in days:
                 l = [i]
@@ -171,7 +171,7 @@ def facultyMenu():
                 students[c].append(pcent)
                 c += 1
             head = ['RollNo', 'Percentage']
-            print(tabulate(students))
+            print(tabulate(students, headers=head))
         elif(ans == 3):#mark attendance
             courses = []
             stat1 = "SELECT course_id, program, dept_id, semester FROM teaches WHERE faculty_id=%d"
@@ -217,7 +217,7 @@ def facultyMenu():
         else:
             print("Enter a valid input")
 
-def hodMenu():
+def adminMenu():
     os.system('cls')
     print("Login successful!")
     while(True):
@@ -305,14 +305,14 @@ def hodMenu():
             depts = []
             for i in mycursor:
                 depts.append([i[0], i[1]])
-            print(tabulate(depts))
+            print(tabulate(depts, headers=['Dept No', 'Department Name']))
             choice = int(input("Enter the department id"))
             stat2 = "SELECT faculty_id, faculty_name FROM faculty WHERE dept_id = %d"
             mycursor.execute(stat2 % choice)
             facmem = []
             for i in mycursor:
                 facmem.append([i[0], i[1]]) 
-            print(tabulate(facmem))
+            print(tabulate(facmem, headers=['Faculty Id', 'Faculty Name']))
         elif(ans == 6):
             break
         else:
@@ -337,7 +337,7 @@ def accept():
             elif(res[1] == 2):
                 facultyMenu()
             elif(res[1] == 3):
-                hodMenu()
+                adminMenu()
         else:
             print("Incorrect password!")
     

@@ -8,49 +8,49 @@ mycursor = con.cursor()
 
 def createTables():
     stat1 = "CREATE TABLE login(\
-    username varchar(30) PRIMARY KEY,\
-    password varchar(30),\
+    username varchar(50) PRIMARY KEY,\
+    password varchar(50),\
     type integer)"
     stat2 = "CREATE TABLE department(\
     dept_id INTEGER PRIMARY KEY,\
-    dept_name varchar(30))"
+    dept_name varchar(50))"
     stat3 = "CREATE TABLE courses(\
-    course_id varchar(30) PRIMARY KEY,\
-    title varchar(30),\
+    course_id varchar(50) PRIMARY KEY,\
+    title varchar(50),\
     dept_id INTEGER NOT NULL,\
     FOREIGN KEY (dept_id) references department(dept_id),\
     credits integer,\
     type integer)"
     stat4 = "CREATE TABLE faculty(\
-    username varchar(30) PRIMARY KEY,\
+    username varchar(50) PRIMARY KEY,\
     faculty_id INTEGER NOT NULL,\
-    faculty_name varchar(30),\
+    faculty_name varchar(50),\
     dept_id INTEGER NOT NULL,\
-    designation varchar(30),\
+    designation varchar(50),\
     FOREIGN KEY (dept_id) references department(dept_id))"
     stat5 = "CREATE TABLE teaches(\
     faculty_id INTEGER NOT NULL,\
-    course_id VARCHAR(30) NOT NULL,\
-    program VARCHAR(30),\
+    course_id VARCHAR(50) NOT NULL,\
+    program VARCHAR(50),\
     dept_id INTEGER NOT NULL,\
     semester INTEGER,\
     FOREIGN KEY (dept_id) references department(dept_id),\
     FOREIGN KEY (course_id) references courses(course_id))"
     stat6 = "CREATE TABLE timetable(\
-    program varchar(30),\
+    program varchar(50),\
     dept_id integer NOT NULL,\
     semester integer,\
-    day varchar(30),\
+    day varchar(50),\
     slot integer,\
     faculty_id INTEGER NOT NULL,\
-    course_id varchar(30) NOT NULL,\
+    course_id varchar(50) NOT NULL,\
     FOREIGN KEY (dept_id) references department(dept_id),\
     FOREIGN KEY (course_id) references courses(course_id))"
     stat7 = "CREATE TABLE student(\
-    username varchar(30) PRIMARY KEY,\
+    username varchar(50) PRIMARY KEY,\
     rollnum integer,\
-    name varchar(30),\
-    program varchar(30),\
+    name varchar(50),\
+    program varchar(50),\
     dept_id integer NOT NULL,\
     semester integer,\
     FOREIGN KEY (dept_id) references department(dept_id),\
@@ -63,12 +63,8 @@ def createTables():
     mycursor.execute(stat6)
     mycursor.execute(stat7)
 
-def insertRows():
-    stat1 = "INSERT INTO login VALUES('211111@iiitt.ac.in', 'pass', 1);\
-    INSERT INTO login VALUES('ambikam@iiitt.ac.in', 'pass', 2);\
-    INSERT INTO login VALUES('hodcse@iiitt.ac.in', 'pass', 3);"
-    mycursor.execute(stat1)
-#createTables()
-insertRows()
+createTables()
+
+con.commit()
 
 con.close()
