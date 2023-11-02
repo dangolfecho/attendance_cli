@@ -29,17 +29,48 @@ def studentMenu():
         global_prog = res[3]
         global_deptid = res[4]
         global_sem = res[5]
+        os.system('cls')
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
         print("Enter 3 to quit")
         ans = int(input())
         if(ans == 1):
-            stat = "SELECT * FROM timetable WHERE program='%s' AND dept_id=%d AND semester='%s'"
+            stat = "SELECT day, slot, course_id FROM timetable WHERE program='%s' AND dept_id=%d AND semester='%s'"
             mycursor.execute(stat % (global_prog, global_deptid, global_sem))
-            res = mycursor.fetchall()
-            print(tabulate(res))
+            time_table = {}
+            days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+            for i in days:
+                for j in range(1,8):
+                    if(j == 1):
+                        timetable[i] = ['-']
+                    else:
+                        timetable[i].append('-')
+            for i in mycursor:
+                day = i[0]
+                slot = i[1]
+                c = i[2]
+                timetable[day][slot-1] = c
+            print(tabulate(timetable))
         elif(ans == 2):
-            print("HI")
+            courses = []
+            stat1 = "SELECT DISTINCT(course_id) FROM timetable WHERE \
+                    program= %s AND dept_id = %d AND semester = %d"
+            mycursor.execute(stat1 % (global_prog, global_deptid, global_sem))
+            for i in mycursor:
+                courses.append([i[0]])
+            c = 0
+            for i in courses:
+                tname = global_prog + "_" + str(global_deptid) + "_" + str(global_sem) + "_" + i
+                stat3 = "SELECT COUNT(DISTINCT(day)) FROM %s"
+                mycursor.execute(stat3 % tname)
+                count = (mycursor.fetchone())[0]
+                stat4 = "SELECT COUNT(*) FROM %s WHERE rollno = %d AND (STATUS=1 OR STATUS = 2)"
+                mycursor.execute(stat4 % (tname, global_rollno))
+                scount = (mycursor.fetchone())[0]
+                pcent = (scount/count)*100
+                courses[c].append(pcent)
+                c += 1
+            print(tabulate(students))
         elif(ans == 3):
             break
         else:
@@ -51,6 +82,7 @@ def facultyMenu():
     res = mycursor.fetchone()
     f_id = res[0]
     while(True):
+        os.system('cls')
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
         print("Enter 3 to mark attendance")
@@ -157,6 +189,7 @@ def facultyMenu():
 
 def hodMenu():
     while(True):
+        os.system('cls')
         print("Enter 1 to create a course")
         print("Enter 2 to assign faculties to courses")
         print("Enter 3 to create the timtable")
