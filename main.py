@@ -7,35 +7,26 @@ con = mysql.connector.connect(host='localhost', user = 'root', passwd = 'root',
         database = 'student')
 mycursor = con.cursor()
 
-global_username = ""
-global_rollno = 0
-global_name = ''
-global_prog = ''
-global_deptid = 0
-global_sem = 0
+global_username = ''
 
 def studentMenu():
-    global global_username
-    global global_rollno
-    global global_name
-    global global_prog
-    global global_deptid
-    global global_sem
+    os.system('cls')
+    stat = "SELECT * FROM student WHERE username = '%s'"
+    mycursor.execute(stat % global_username)
+    res = mycursor.fetchone()
+    global_rollno = res[1]
+    global_name = res[2]
+    global_prog = res[3]
+    global_deptid = res[4]
+    global_sem = res[5]
+    print("Welcome ", global_name)
     while(True):
-        stat = "SELECT * FROM student WHERE username = '%s'"
-        mycursor.execute(stat % global_username)
-        res = mycursor.fetchone()
-        global_rollno = res[1]
-        global_name = res[2]
-        global_prog = res[3]
-        global_deptid = res[4]
-        global_sem = res[5]
-        print("Login successful!")
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
         print("Enter 3 to quit")
         ans = int(input())
         if(ans == 1):
+            os.system('cls')
             stat = "SELECT day, slot, course_id FROM timetable WHERE program='%s' AND dept_id=%d AND semester='%s'"
             mycursor.execute(stat % (global_prog, global_deptid, global_sem))
             timetable = {}
@@ -63,16 +54,16 @@ def studentMenu():
                 tab.append(l)
             print(tabulate(tab, headers=head))
         elif(ans == 2):
+            os.system('cls')
             courses = []
             stat1 = "SELECT DISTINCT(course_id) FROM timetable WHERE \
                     program= '%s' AND dept_id = %d AND semester = %d"
             mycursor.execute(stat1 % (global_prog, global_deptid, global_sem))
             for i in mycursor:
-                courses.append([i[0]])
+                if(i[0] != '-'):
+                    courses.append([i[0]])
             c = 0
             for i in courses:
-                if(i[0] == '-'):
-                    continue
                 tname = global_prog + "_" + str(global_deptid) + "_" + str(global_sem) + "_" + i[0]
                 stat3 = "SELECT COUNT(DISTINCT(DATE)) FROM %s"
                 mycursor.execute(stat3 % tname)
@@ -80,6 +71,10 @@ def studentMenu():
                 stat4 = "SELECT COUNT(*) FROM %s WHERE rollno = %d AND (STATUS=1 OR STATUS = 2)"
                 mycursor.execute(stat4 % (tname, global_rollno))
                 scount = (mycursor.fetchone())[0]
+                if(count == 0):
+                    courses[c].append(100)
+                    c += 1
+                    continue
                 pcent = (scount/count)*100
                 courses[c].append(pcent)
                 c += 1
@@ -87,21 +82,23 @@ def studentMenu():
         elif(ans == 3):
             break
         else:
-            print("Enter a valid input")
+            print("Enter a valid input\n")
 
 def facultyMenu():
-    quer = "SELECT faculty_id FROM faculty WHERE username='%s'"
+    os.system('cls')
+    quer = "SELECT faculty_id, faculty_name FROM faculty WHERE username='%s'"
     mycursor.execute(quer % global_username)
     res = mycursor.fetchone()
     f_id = res[0]
+    print("Welcome ", res[1])
     while(True):
-        print("Login successful!")
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
         print("Enter 3 to mark attendance")
         print("Enter 4 to quit")
         ans = int(input())
         if(ans == 1):
+            os.system('cls')
             timetable = {}
             days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
             for i in days:
@@ -138,6 +135,7 @@ def facultyMenu():
                 tab.append(l)
             print(tabulate(tab, headers=head))
         elif(ans == 2):
+            os.system('cls')
             courses = []
             stat1 = "SELECT course_id, program, dept_id, semester FROM teaches WHERE faculty_id=%d"
             mycursor.execute(stat1 % f_id)
@@ -173,6 +171,7 @@ def facultyMenu():
             head = ['RollNo', 'Percentage']
             print(tabulate(students, headers=head))
         elif(ans == 3):#mark attendance
+            os.system('cls')
             courses = []
             stat1 = "SELECT course_id, program, dept_id, semester FROM teaches WHERE faculty_id=%d"
             mycursor.execute(stat1 % f_id)
@@ -198,14 +197,14 @@ def facultyMenu():
             print("ROLL NUMBER\t\tSTATUS")
             c = 0
             for i in students:
-                print(i[0],end = '\t\t')
+                print(i[0],end = '\t\t\t')
                 status=int(input())
                 students[c].append(status)
                 c += 1
             date='%d-%d-%d'
-            day = input("Enter the date")
-            month = input("Enter the month")
-            year = input("Enter the year")
+            day = input("Enter the date\n")
+            month = input("Enter the month\n")
+            year = input("Enter the year\n")
             date = day + '-' + month + year
             stat3 = "INSERT INTO %s VALUES('%s', %d, %d)"
             for i in students:
@@ -215,7 +214,7 @@ def facultyMenu():
         elif(ans == 4):
             break
         else:
-            print("Enter a valid input")
+            print("Enter a valid input\n")
 
 def adminMenu():
     os.system('cls')
@@ -229,6 +228,7 @@ def adminMenu():
         print("Enter 6 to quit")
         ans = int(input())
         if(ans == 1):
+            os.system('cls')
             course_id = input("Enter the course id\n")
             title = input("Enter the course's title\n")
             dept_id = int(input("Enter the department\n"))
@@ -244,6 +244,7 @@ def adminMenu():
             con.commit()
 
         elif(ans == 2):
+            os.system('cls')
             fac_id = int(input("Enter the faculty id\n"))
             course_id = input("Enter the course id\n")
             program = input("Enter the program\n")
@@ -254,6 +255,7 @@ def adminMenu():
             print("Added!")
             con.commit()
         elif(ans== 3):
+            os.system('cls')
             prog = input("Enter the program name\n")
             dept_id = int(input("Enter the department id\n"))
             sem = int(input("Enter the semester number\n"))
@@ -278,7 +280,7 @@ def adminMenu():
                     else:
                         mycursor.execute(stat2 % (prog, dept_id, sem, i\
                                 , j, 0, "-"))
-            print("DONE")
+            print("Timetable created!")
             for i in s:
                 tt = table_name + '_' + i
                 stat3 = "CREATE TABLE %s(\
@@ -289,7 +291,12 @@ def adminMenu():
             con.commit()
                     
         elif(ans == 4):
-            fac_id = int(input("Enter the faculty id\n"))
+            os.system('cls')
+            stat0 = "SELECT MAX(faculty_id) FROM faculty"
+            mycursor.execute(stat0)
+            b = mycursor.fetchone()
+            fac_id = b[0] + 1
+            #fac_id = int(input("Enter the faculty id\n"))
             name = input("Enter the name\n")
             dept_id = int(input("Enter department id\n"))
             desig = input("Enter their designation\n")
@@ -316,16 +323,15 @@ def adminMenu():
         elif(ans == 6):
             break
         else:
-            print("Enter a valid input")
+            print("Enter a valid input\n")
 
 
 def accept():
     global global_username
     username = input("Enter the username\n")
     password = getpass.getpass("Enter the password\n")
-    query = "SELECT password, type FROM login WHERE username = "
-    query += "'" + username + "';"
-    mycursor.execute(query)
+    query = "SELECT password, type FROM login WHERE username = '%s'"
+    mycursor.execute(query % username)
     res = mycursor.fetchone()
     if(mycursor.rowcount == 0):
         print("Incorrect username!")
@@ -355,5 +361,5 @@ def menu():
 
 if __name__ == '__main__':
     menu()
-    print("Done")
+    print("BEWARE : 85% attendance is necessary to write your exams!")
     con.commit()
