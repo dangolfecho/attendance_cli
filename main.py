@@ -1,4 +1,5 @@
 import os
+from math import ceil
 import getpass
 import mysql.connector
 from tabulate import tabulate
@@ -29,7 +30,7 @@ def studentMenu():
         global_prog = res[3]
         global_deptid = res[4]
         global_sem = res[5]
-        os.system('cls')
+        print("Login successful!")
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
         print("Enter 3 to quit")
@@ -37,7 +38,7 @@ def studentMenu():
         if(ans == 1):
             stat = "SELECT day, slot, course_id FROM timetable WHERE program='%s' AND dept_id=%d AND semester='%s'"
             mycursor.execute(stat % (global_prog, global_deptid, global_sem))
-            time_table = {}
+            timetable = {}
             days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
             for i in days:
                 for j in range(1,8):
@@ -50,18 +51,30 @@ def studentMenu():
                 slot = i[1]
                 c = i[2]
                 timetable[day][slot-1] = c
-            print(tabulate(timetable))
+            head = ['DAY', 1, 2, 3, 4, 5, 6, 7]
+            tab = []
+            for i in days:
+                l = [i]
+                for j in timetable[i]:
+                    if(j == '-'):
+                        l.append("FREE")
+                    else:
+                        l.append(j)
+                tab.append(l)
+            print(tabulate(tab, headers=head))
         elif(ans == 2):
             courses = []
             stat1 = "SELECT DISTINCT(course_id) FROM timetable WHERE \
-                    program= %s AND dept_id = %d AND semester = %d"
+                    program= '%s' AND dept_id = %d AND semester = %d"
             mycursor.execute(stat1 % (global_prog, global_deptid, global_sem))
             for i in mycursor:
                 courses.append([i[0]])
             c = 0
             for i in courses:
-                tname = global_prog + "_" + str(global_deptid) + "_" + str(global_sem) + "_" + i
-                stat3 = "SELECT COUNT(DISTINCT(day)) FROM %s"
+                if(i[0] == '-'):
+                    continue
+                tname = global_prog + "_" + str(global_deptid) + "_" + str(global_sem) + "_" + i[0]
+                stat3 = "SELECT COUNT(DISTINCT(DATE)) FROM %s"
                 mycursor.execute(stat3 % tname)
                 count = (mycursor.fetchone())[0]
                 stat4 = "SELECT COUNT(*) FROM %s WHERE rollno = %d AND (STATUS=1 OR STATUS = 2)"
@@ -70,7 +83,7 @@ def studentMenu():
                 pcent = (scount/count)*100
                 courses[c].append(pcent)
                 c += 1
-            print(tabulate(students))
+            print(tabulate(courses, headers=['COURSE', 'PERCENTAGE']))
         elif(ans == 3):
             break
         else:
@@ -82,14 +95,14 @@ def facultyMenu():
     res = mycursor.fetchone()
     f_id = res[0]
     while(True):
-        os.system('cls')
+        print("Login successful!")
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
         print("Enter 3 to mark attendance")
         print("Enter 4 to quit")
         ans = int(input())
         if(ans == 1):
-            time_table = {}
+            timetable = {}
             days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
             for i in days:
                 for j in range(1,8):
@@ -99,22 +112,37 @@ def facultyMenu():
                         timetable[i].append('-')
             stat = "SELECT program, dept_id, semester, day, slot, course_id FROM TIMETABLE WHERE faculty_id = %d"
             mycursor.execute(stat % f_id)
+            save = []
             for i in mycursor:
+                save.append(i)
+            for i in save:
                 prog = i[0]
                 dept_id = i[1]
                 year = ceil(i[2]/2)
                 day = i[3]
                 slot = i[4]
                 course = i[5]
-                timetable[day][slot-1] = str(year) + " " + course
-            print(tabulate(timetable))
+                stat1 = "SELECT dept_name FROM department WHERE dept_id = %d"
+                mycursor.execute(stat1 % dept_id)
+                dname = (mycursor.fetchone())[0]
+                timetable[day][slot-1] = "YEAR" + str(year) + " " + dname + " " + course 
+            head = [1, 2, 3, 4, 5, 6, 7]
+            tab = []
+            for i in days:
+                l = [i]
+                for j in (timetable[i]):
+                    if(j == '-'):
+                        l.append('Free')
+                    else:
+                        l.append(j)
+                tab.append(l)
+            print(tabulate(tab, headers=head))
         elif(ans == 2):
             courses = []
             stat1 = "SELECT course_id, program, dept_id, semester FROM teaches WHERE faculty_id=%d"
             mycursor.execute(stat1 % f_id)
             count = 0
             for i in mycursor:
-                save.append(i)
                 count += 1
                 courses.append(i)
                 print(count, i[0])
@@ -129,9 +157,9 @@ def facultyMenu():
                     dept_id = %d AND semester = %d"
             mycursor.execute(stat2 % (prog, dept_id, sem))
             for i in mycursor:
-                students.append([i])
+                students.append([i[0]])
             tname = prog + "_" + str(dept_id) + "_" + str(sem) + "_" + course
-            stat3 = "SELECT COUNT(DISTINCT(day)) FROM %s"
+            stat3 = "SELECT COUNT(DISTINCT(DATE)) FROM %s"
             mycursor.execute(stat3 % tname)
             count = (mycursor.fetchone())[0]
             stat4 = "SELECT COUNT(*) FROM %s WHERE rollno = %d AND (STATUS=1 OR STATUS = 2)"
@@ -142,6 +170,7 @@ def facultyMenu():
                 pcent = (scount/count)*100
                 students[c].append(pcent)
                 c += 1
+            head = ['RollNo', 'Percentage']
             print(tabulate(students))
         elif(ans == 3):#mark attendance
             courses = []
@@ -163,7 +192,7 @@ def facultyMenu():
                     dept_id = %d AND semester = %d"
             mycursor.execute(stat2 % (prog, dept_id, sem))
             for i in mycursor:
-                students.append([i])
+                students.append([i[0]])
             tname = prog + "_" + str(dept_id) + "_" + str(sem) + "_" + course
             print("Enter 0 for Absent\nEnter 1 for Present\nEnter 2 for OD")
             print("ROLL NUMBER\t\tSTATUS")
@@ -171,25 +200,27 @@ def facultyMenu():
             for i in students:
                 print(i[0],end = '\t\t')
                 status=int(input())
-                students[c].append(i[0])
+                students[c].append(status)
                 c += 1
             date='%d-%d-%d'
-            day = int(input("Enter the date"))
-            month = int(input("Enter the month"))
-            year = int(input("Enter the year"))
-            date = date % (day, month, year)
+            day = input("Enter the date")
+            month = input("Enter the month")
+            year = input("Enter the year")
+            date = day + '-' + month + year
             stat3 = "INSERT INTO %s VALUES('%s', %d, %d)"
             for i in students:
-                mycursor.execute(stat3 % (date, i[0], i[1]))
+                mycursor.execute(stat3 % (tname, date, i[0], i[1]))
             print("DONE")
+            con.commit()
         elif(ans == 4):
             break
         else:
             print("Enter a valid input")
 
 def hodMenu():
+    os.system('cls')
+    print("Login successful!")
     while(True):
-        os.system('cls')
         print("Enter 1 to create a course")
         print("Enter 2 to assign faculties to courses")
         print("Enter 3 to create the timtable")
@@ -202,14 +233,15 @@ def hodMenu():
             title = input("Enter the course's title\n")
             dept_id = int(input("Enter the department\n"))
             ccredits = int(input("Enter the number of credits\n"))
-            ctype=input("Enter T for theory course and P for practical")
-            stat = "INSERT INTO courses VALUES('%s', '%s', %d, %d, %d"
+            ctype=input("Enter T for theory course and P for practical\n")
+            stat = "INSERT INTO courses VALUES('%s', '%s', %d, %d, %d)"
             if(ctype == 'T'):
                 mycursor.execute(stat % (course_id, title, dept_id, ccredits, 1))
             elif(ctype == 'P'):
                 mycursor.execute(stat % (course_id, title, dept_id, ccredits, 0))
             else:
                 print("Enter a valid course type")
+            con.commit()
 
         elif(ans == 2):
             fac_id = int(input("Enter the faculty id\n"))
@@ -220,6 +252,7 @@ def hodMenu():
             stat = "INSERT INTO teaches VALUES(%d, '%s', '%s', %d, %d)"
             mycursor.execute(stat % (fac_id, course_id, program, dept_id, semester))
             print("Added!")
+            con.commit()
         elif(ans== 3):
             prog = input("Enter the program name\n")
             dept_id = int(input("Enter the department id\n"))
@@ -228,19 +261,24 @@ def hodMenu():
             days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
             print("Enter free if no class is scheduled\n")
             stat1 = "Enter the class at slot %d on %s"
-            stat2 = "INSERT INTO timetable VALUES('%s', %d, %d, %d, '%s', %d, '%s')"
+            stat2 = "INSERT INTO timetable VALUES('%s', %d, %d, '%s', %d, %d, '%s')"
             s = set()
             for i in days:
                 for j in range(1,8):
-                    print(stat1 % (i, j))
+                    print(stat1 % (j, i))
                     course_id = input()
                     if(course_id != "free"):
-                        mycursor.execute(stat2 % (prog, dept_id, sem, i\
-                                , j, course_id))
+                        stat5 = "SELECT faculty_id FROM teaches WHERE\
+                                course_id = '%s' AND program = '%s' AND\
+                                dept_id = %d AND semester = %d"
+                        mycursor.execute(stat5 %(course_id, prog, dept_id, sem))
+                        fac_id = (mycursor.fetchone())[0]
+                        mycursor.execute(stat2 % (prog, dept_id, sem, i, j, fac_id, course_id))
                         s.add(course_id)
                     else:
                         mycursor.execute(stat2 % (prog, dept_id, sem, i\
-                                , j, "-"))
+                                , j, 0, "-"))
+            print("DONE")
             for i in s:
                 tt = table_name + '_' + i
                 stat3 = "CREATE TABLE %s(\
@@ -248,21 +286,24 @@ def hodMenu():
                         ROLLNO INTEGER NOT NULL,\
                         STATUS INTEGER)"
                 mycursor.execute(stat3 % tt)
+            con.commit()
                     
         elif(ans == 4):
             fac_id = int(input("Enter the faculty id\n"))
             name = input("Enter the name\n")
             dept_id = int(input("Enter department id\n"))
             desig = input("Enter their designation\n")
-            stat = "INSERT INTO faculty VALUES(%d, '%s', %d, '%s');"
-            mycursor.execute(stat % (fac_id, name, dept_id, desig))
+            username = input("Enter their username\n")
+            stat = "INSERT INTO faculty VALUES('%s', %d, '%s', %d, '%s');"
+            mycursor.execute(stat % (username, fac_id, name, dept_id, desig))
             print("The new faculty has been added!")
+            con.commit()
         elif(ans == 5):
             stat1 = "SELECT * FROM department"
             mycursor.execute(stat1)
             c = 0
             depts = []
-            for i in stat1:
+            for i in mycursor:
                 depts.append([i[0], i[1]])
             print(tabulate(depts))
             choice = int(input("Enter the department id"))
@@ -270,7 +311,7 @@ def hodMenu():
             mycursor.execute(stat2 % choice)
             facmem = []
             for i in mycursor:
-                facmem.append([i[1], i[2], i[4]]) 
+                facmem.append([i[0], i[1]]) 
             print(tabulate(facmem))
         elif(ans == 6):
             break
@@ -291,8 +332,6 @@ def accept():
     else:
         if(password == res[0]):
             global_username = username
-            print(global_username)
-            print("Login successful!")
             if(res[1] == 1):
                 studentMenu()
             elif(res[1] == 2):
@@ -317,3 +356,4 @@ def menu():
 if __name__ == '__main__':
     menu()
     print("Done")
+    con.commit()

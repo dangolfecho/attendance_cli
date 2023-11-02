@@ -23,7 +23,7 @@ def createTables():
     type integer)"
     stat4 = "CREATE TABLE faculty(\
     username varchar(30) PRIMARY KEY,\
-    faculty_id INTEGER DISTINCT,\
+    faculty_id INTEGER NOT NULL,\
     faculty_name varchar(30),\
     dept_id INTEGER NOT NULL,\
     designation varchar(30),\
@@ -32,10 +32,9 @@ def createTables():
     faculty_id INTEGER NOT NULL,\
     course_id VARCHAR(30) NOT NULL,\
     program VARCHAR(30),\
-    dept_id INTEGER NOT NULL,
+    dept_id INTEGER NOT NULL,\
     semester INTEGER,\
-    FOREIGN KEY (faculty_id) references faculty(faculty_id),\
-    FOREIGN KEY (dept_id) references department (department_id),\
+    FOREIGN KEY (dept_id) references department(dept_id),\
     FOREIGN KEY (course_id) references courses(course_id))"
     stat6 = "CREATE TABLE timetable(\
     program varchar(30),\
@@ -46,7 +45,6 @@ def createTables():
     faculty_id INTEGER NOT NULL,\
     course_id varchar(30) NOT NULL,\
     FOREIGN KEY (dept_id) references department(dept_id),\
-    FOREIGN KEY (faculty_id) references faculty(faculty_id),\
     FOREIGN KEY (course_id) references courses(course_id))"
     stat7 = "CREATE TABLE student(\
     username varchar(30) PRIMARY KEY,\
@@ -70,5 +68,7 @@ def insertRows():
     INSERT INTO login VALUES('ambikam@iiitt.ac.in', 'pass', 2);\
     INSERT INTO login VALUES('hodcse@iiitt.ac.in', 'pass', 3);"
     mycursor.execute(stat1)
-createTables()
+#createTables()
 insertRows()
+
+con.close()
