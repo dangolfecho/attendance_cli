@@ -31,7 +31,11 @@ def createTables():
     stat5 = "CREATE TABLE teaches(\
     faculty_id INTEGER NOT NULL,\
     course_id VARCHAR(30) NOT NULL,\
+    program VARCHAR(30),\
+    dept_id INTEGER NOT NULL,
+    semester INTEGER,\
     FOREIGN KEY (faculty_id) references faculty(faculty_id),\
+    FOREIGN KEY (dept_id) references department (department_id),\
     FOREIGN KEY (course_id) references courses(course_id))"
     stat6 = "CREATE TABLE timetable(\
     program varchar(30),\
@@ -39,8 +43,10 @@ def createTables():
     semester integer,\
     day varchar(30),\
     slot integer,\
+    faculty_id INTEGER NOT NULL,\
     course_id varchar(30) NOT NULL,\
     FOREIGN KEY (dept_id) references department(dept_id),\
+    FOREIGN KEY (faculty_id) references faculty(faculty_id),\
     FOREIGN KEY (course_id) references courses(course_id))"
     stat7 = "CREATE TABLE student(\
     username varchar(30) PRIMARY KEY,\
