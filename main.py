@@ -93,19 +93,63 @@ def facultyMenu():
             dept_id = courses[ans-1][2]
             sem = courses[ans-1][3]
             students = []
-            stat2 = "SELECT "
+            stat2 = "SELECT rollnum FROM student WHERE program = '%s' AND\
+                    dept_id = %d AND semester = %d"
+            mycursor.execute(stat2 % (prog, dept_id, sem))
+            for i in mycursor:
+                students.append([i])
+            tname = prog + "_" + str(dept_id) + "_" + str(sem) + "_" + course
+            stat3 = "SELECT COUNT(DISTINCT(day)) FROM %s"
+            mycursor.execute(stat3 % tname)
+            count = (mycursor.fetchone())[0]
+            stat4 = "SELECT COUNT(*) FROM %s WHERE rollno = %d AND (STATUS=1 OR STATUS = 2)"
+            c = 0
+            for i in students:
+                mycursor.execute(stat4 % (tname, i[0]))
+                scount = (mycursor.fetchone())[0]
+                pcent = (scount/count)*100
+                students[c].append(pcent)
+                c += 1
+            print(tabulate(students))
         elif(ans == 3):#mark attendance
             courses = []
-            stat1 = "SELECT course_id FROM teaches WHERE faculty_id=%d"
+            stat1 = "SELECT course_id, program, dept_id, semester FROM teaches WHERE faculty_id=%d"
             mycursor.execute(stat1 % f_id)
             count = 0
             for i in mycursor:
                 count += 1
                 courses.append(i)
-                print(count, i)
+                print(count, i[0])
             print("Enter which course using the serial number")
             ans = int(input())
-            ans -= 1
+            course = courses[ans-1][0]
+            prog = courses[ans-1][1]
+            dept_id = courses[ans-1][2]
+            sem = courses[ans-1][3]
+            students = []
+            stat2 = "SELECT rollnum FROM student WHERE program = '%s' AND\
+                    dept_id = %d AND semester = %d"
+            mycursor.execute(stat2 % (prog, dept_id, sem))
+            for i in mycursor:
+                students.append([i])
+            tname = prog + "_" + str(dept_id) + "_" + str(sem) + "_" + course
+            print("Enter 0 for Absent\nEnter 1 for Present\nEnter 2 for OD")
+            print("ROLL NUMBER\t\tSTATUS")
+            c = 0
+            for i in students:
+                print(i[0],end = '\t\t')
+                status=int(input())
+                students[c].append(i[0])
+                c += 1
+            date='%d-%d-%d'
+            day = int(input("Enter the date"))
+            month = int(input("Enter the month"))
+            year = int(input("Enter the year"))
+            date = date % (day, month, year)
+            stat3 = "INSERT INTO %s VALUES('%s', %d, %d)"
+            for i in students:
+                mycursor.execute(stat3 % (date, i[0], i[1]))
+            print("DONE")
         elif(ans == 4):
             break
         else:
