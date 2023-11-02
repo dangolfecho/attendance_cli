@@ -225,7 +225,20 @@ def hodMenu():
             mycursor.execute(stat % (fac_id, name, dept_id, desig))
             print("The new faculty has been added!")
         elif(ans == 5):
-            print("HI")
+            stat1 = "SELECT * FROM department"
+            mycursor.execute(stat1)
+            c = 0
+            depts = []
+            for i in stat1:
+                depts.append([i[0], i[1]])
+            print(tabulate(depts))
+            choice = int(input("Enter the department id"))
+            stat2 = "SELECT faculty_id, faculty_name FROM faculty WHERE dept_id = %d"
+            mycursor.execute(stat2 % choice)
+            facmem = []
+            for i in mycursor:
+                facmem.append([i[1], i[2], i[4]]) 
+            print(tabulate(facmem))
         elif(ans == 6):
             break
         else:
