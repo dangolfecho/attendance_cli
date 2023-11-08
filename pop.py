@@ -55,6 +55,9 @@ def createTables():
     semester integer,\
     FOREIGN KEY (dept_id) references department(dept_id),\
     FOREIGN KEY (username) references login(username))"
+    stat8 = "CREATE TABLE misc(\
+    property varchar(50),\
+    pvalue varchar(50))"
     mycursor.execute(stat1)
     mycursor.execute(stat2)
     mycursor.execute(stat3)
@@ -62,7 +65,7 @@ def createTables():
     mycursor.execute(stat5)
     mycursor.execute(stat6)
     mycursor.execute(stat7)
-
+    mycursor.execute(stat8)
 createTables()
 
 con.commit()
