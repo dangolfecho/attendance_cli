@@ -60,13 +60,25 @@ def studentMenu():
     global_sem = res[5]
     print("Welcome ", global_name)
     while(True):
-        print("Enter 1 to view the timetable")
-        print("Enter 2 to view the attendance status")
-        print("Enter 3 to view the attendance for a specific course")
-        print("Enter 4 to change your password")
-        print("Enter 5 to quit")
+        print("Enter 1 to view today's timetable")
+        print("Enter 2 to view the complete timetable")
+        print("Enter 3 to view the attendance status")
+        print("Enter 4 to view the attendance for a specific course")
+        print("Enter 5 to change your password")
+        print("Enter 6 to quit")
         ans = int(input())
         if(ans == 1):
+            os.system('cls')
+            today = datetime.datetime.now().strftime("%A")
+            stat = "SELECT slot, course_id FROM timetable WHERE program='%s' AND dept_id=%d AND semester='%s' AND day='%s'"
+            mycursor.execute(stat % (global_prog, global_deptid, global_sem, today))
+            res = []
+            head = ['SLOT', 1, 2, 3, 4, 5, 6, 7]
+            res = [['-']]
+            for i in mycursor:
+                res[0].append(i[1])
+            print(tabulate(res,headers=head))
+        elif(ans == 2):
             os.system('cls')
             stat = "SELECT day, slot, course_id FROM timetable WHERE program='%s' AND dept_id=%d AND semester='%s'"
             mycursor.execute(stat % (global_prog, global_deptid, global_sem))
@@ -94,7 +106,7 @@ def studentMenu():
                         l.append(j)
                 tab.append(l)
             print(tabulate(tab, headers=head))
-        elif(ans == 2):
+        elif(ans == 3):
             os.system('cls')
             courses = []
             stat1 = "SELECT DISTINCT(course_id) FROM timetable WHERE \
@@ -126,7 +138,7 @@ def studentMenu():
             if(len(shortage) > 0):
                 print("Attendance shortage in the following courses")
                 print(tabulate(shortage, headers=['COURSE', 'PERCENTAGE']))
-        elif(ans == 3):
+        elif(ans == 4):
             os.system('cls')
             courses = []
             stat1 = "SELECT DISTINCT(course_id) FROM timetable WHERE\
@@ -160,9 +172,9 @@ def studentMenu():
                     status = 'Absent'
                 printer.append([cur_date, eng_day, status])
             print(tabulate(printer, headers=['Date', 'Day', 'Status']))
-        elif(ans == 4):
-            changepass()
         elif(ans == 5):
+            changepass()
+        elif(ans == 6):
             break
         else:
             print("Enter a valid input\n")
@@ -175,13 +187,32 @@ def facultyMenu():
     f_id = res[0]
     print("Welcome ", res[1])
     while(True):
-        print("Enter 1 to view the timetable")
-        print("Enter 2 to view the attendance status")
-        print("Enter 3 to mark the attendance")
-        print("Enter 4 to change your password")
-        print("Enter 5 to quit")
+        print("Enter 1 to view today's timetable")
+        print("Enter 2 to view the entire timetable")
+        print("Enter 3 to view the attendance status")
+        print("Enter 4 to mark the attendance")
+        print("Enter 5 to change your password")
+        print("Enter 6 to quit")
         ans = int(input())
         if(ans == 1):
+            os.system('cls')
+            today = datetime.datetime.now().strftime("%A")
+            stat = "SELECT program, dept_id, semester, day, slot, course_id FROM timetable WHERE faculty_id=%d AND day='%s'"
+            mycursor.execute(stat % (f_id, today))
+            res = []
+            head = ['SLOT', 1, 2, 3, 4, 5, 6, 7]
+            res = [[' ']]
+            for i in range(7):
+                res[0].append('FREE')
+            for i in mycursor:
+                if(i[1] == '-'):
+                    continue
+                stat1 = "SELECT dept_name FROM department WHERE dept_id = %d"
+                mycursor.execute(stat1 % i[1])
+                dname = (mycursor.fetchone())[0]
+                res[0][i[4]] = "YEAR-" + str(ceil((i[2])/2)) + " " + dname + " " + i[5]
+            print(tabulate(res,headers=head))
+        elif(ans == 2):
             os.system('cls')
             timetable = {}
             days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -218,7 +249,7 @@ def facultyMenu():
                         l.append(j)
                 tab.append(l)
             print(tabulate(tab, headers=head))
-        elif(ans == 2):
+        elif(ans == 3):
             os.system('cls')
             courses = []
             stat1 = "SELECT course_id, program, dept_id, semester FROM teaches WHERE faculty_id=%d"
@@ -288,7 +319,7 @@ def facultyMenu():
                         s.sendmail(username, addr, message.as_string())
                     s.quit()
                     print("Mails have been sent!")
-        elif(ans == 3):#mark attendance
+        elif(ans == 4):#mark attendance
             os.system('cls')
             courses = []
             stat1 = "SELECT course_id, program, dept_id, semester FROM teaches WHERE faculty_id=%d"
@@ -329,9 +360,9 @@ def facultyMenu():
                 mycursor.execute(stat3 % (tname, date, i[0], i[1]))
             print("DONE")
             con.commit()
-        elif(ans == 4):
-            changepass()
         elif(ans == 5):
+            changepass()
+        elif(ans == 6):
             break
         else:
             print("Enter a valid input\n")
