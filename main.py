@@ -191,8 +191,9 @@ def facultyMenu():
         print("Enter 2 to view the entire timetable")
         print("Enter 3 to view the attendance status")
         print("Enter 4 to mark the attendance")
-        print("Enter 5 to change your password")
-        print("Enter 6 to quit")
+        print("Enter 5 to update the attendance")
+        print("Enter 6 to change your password")
+        print("Enter 7 to quit")
         ans = int(input())
         if(ans == 1):
             os.system('cls')
@@ -350,19 +351,72 @@ def facultyMenu():
                 status=int(input())
                 students[c].append(status)
                 c += 1
-            date='%d-%d-%d'
-            day = input("Enter the day\n")
-            month = input("Enter the month\n")
-            year = input("Enter the year\n")
-            date = day + '-' + month + '-' + year
+            print("Enter 1 if you want to enter the data using today's date")
+            print("Enter 2 if you want to enter the data using another date")
+            ans = int(input())
+            if(ans == 1):
+                date = datetime.datetime.now().strftime("%d-%m-%Y")
+            else:
+                day = input("Enter the day\n")
+                month = input("Enter the month\n")
+                year = input("Enter the year\n")
+                date = day + '-' + month + '-' + year
             stat3 = "INSERT INTO %s VALUES('%s', %d, %d)"
             for i in students:
                 mycursor.execute(stat3 % (tname, date, i[0], i[1]))
             print("DONE")
             con.commit()
         elif(ans == 5):
-            changepass()
+            os.system('cls')
+            courses = []
+            stat1 = "SELECT course_id, program, dept_id, semester FROM teaches WHERE faculty_id=%d"
+            mycursor.execute(stat1 % f_id)
+            count = 0
+            for i in mycursor:
+                count += 1
+                courses.append(i)
+                print(count, i[0])
+            print("Enter which course using the serial number")
+            ans = int(input())
+            course = courses[ans-1][0]
+            prog = courses[ans-1][1]
+            dept_id = courses[ans-1][2]
+            sem = courses[ans-1][3]
+            dates = []
+            tname = prog + "_" + str(dept_id) + "_" + str(sem) + "_" + course
+            stat2 = "SELECT DISTINCT(DATE) FROM %s"
+            mycursor.execute(stat2 % tname)
+            c = 0
+            for i in mycursor:
+                c += 1
+                dates.append([c, i[0]])
+            print(tabulate(dates,headers=['SNo', 'Date']))
+            print("Select which date using the serial number\n")
+            ans = int(input())
+            date = dates[ans-1][1]
+            stat3 = "SELECT ROLLNO, STATUS FROM %s WHERE DATE='%s'"
+            mycursor.execute(stat3 % (tname, date))
+            res = []
+            for i in mycursor:
+                if(i[1] == 0):
+                    res.append([i[0], "Absent"])
+                elif(i[1] == 1):
+                    res.append([i[0], "Present"])
+                else:
+                    res.append([i[0], "On-duty"])
+            print(tabulate(res, headers=['Roll Number', 'Status']))
+            while(True):
+                rollno = int(input("Enter the roll number\nEnter 0 to stop\n"))
+                if(rollno == 0):
+                    break
+                status = int(input("Enter the new attendance status\n"))
+                stat4 = "UPDATE %s SET STATUS=%d WHERE ROLLNO=%d AND DATE='%s'"
+                mycursor.execute(stat4 % (tname, status, rollno, date))
+                con.commit()
+                print("Attendance updated!")
         elif(ans == 6):
+            changepass()
+        elif(ans == 7):
             break
         else:
             print("Enter a valid input\n")
@@ -395,8 +449,8 @@ def adminMenu():
                 mycursor.execute(stat % (course_id, title, dept_id, ccredits, 0))
             else:
                 print("Enter a valid course type")
+            print("Course added!")
             con.commit()
-
         elif(ans == 2):
             os.system('cls')
             program = input("Enter the program\n")
@@ -410,12 +464,15 @@ def adminMenu():
             mycursor.execute(stat % (fac_id, course_id, program, dept_id, semester))
             print("Added!")
             con.commit()
-        elif(ans== 3):
+        elif(ans == 3):
             os.system('cls')
             prog = input("Enter the program name\n")
             getDeptList()
             dept_id = int(input("Enter the department id\n"))
             sem = int(input("Enter the semester number\n"))
+            stat0 = "DELETE FROM TIMETABLE WHERE prog = '%s' AND dept_id = %d AND sem=%d"
+            mycursor.execute(stat0 % (prog, dept_id, sem))
+            con.commit()
             table_name = prog + '_' + str(dept_id) + '_' + str(sem)
             days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
             print("Enter free if no class is scheduled\n")
