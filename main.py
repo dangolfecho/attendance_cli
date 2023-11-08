@@ -5,6 +5,7 @@ import mysql.connector
 from tabulate import tabulate
 import datetime
 import smtplib
+from email.mime.text import MIMEText
 
 con = mysql.connector.connect(host='localhost', user = 'root', passwd = 'root',
         database = 'student')
@@ -250,11 +251,14 @@ def facultyMenu():
                     passwd = "nvoc yrek yibu nbws"
                     s.login(username, passwd)
                     for i in range(0, len(shortage)):
-                        message = "You only have " + str(shortage[i][1]) + "% attendance in " + course + ".\n85% is required to write the exams!"
+                        message = MIMEText("You only have " + str(shortage[i][1]) + "% attendance in " + course + ".\n85% is required to write the exams!")
+                        message['Subject'] = "Attendance Warning"
+                        message['From'] = username
                         stat = "SELECT username from student WHERE rollnum = %d"
                         mycursor.execute(stat % shortage[i][0])
                         addr = (mycursor.fetchone())[0]
-                        s.sendmail(username, addr, message)
+                        message['To'] = addr
+                        s.sendmail(username, addr, message.as_string())
                     s.quit()
                     print("Mails have been sent!")
         elif(ans == 3):#mark attendance
