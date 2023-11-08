@@ -275,10 +275,10 @@ def facultyMenu():
                     passwd = "nvoc yrek yibu nbws"
                     s.login(username, passwd)
                     for i in range(0, len(shortage)):
-                        message = MIMEText("You only have " +
-                                str(shortage[i][1]) + "% attendance in " +
-                                course + ".\n",attendance_req,
-                                "% is required to write the exams!", sep='')
+                        inner_str = "You only have " + str(shortage[i][1])
+                        inner_str += "% attendance in " + course + ".\n"
+                        inner_str += str(attendance_req) + "% is required to write the exams!"
+                        message = MIMEText(inner_str)
                         message['Subject'] = "Attendance Warning"
                         message['From'] = username
                         stat = "SELECT username from student WHERE rollnum = %d"
