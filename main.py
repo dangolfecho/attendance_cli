@@ -3,6 +3,7 @@ from math import ceil
 import getpass
 import mysql.connector
 from tabulate import tabulate
+import datetime
 con = mysql.connector.connect(host='localhost', user = 'root', passwd = 'root',
         database = 'student')
 mycursor = con.cursor()
@@ -23,7 +24,7 @@ def studentMenu():
     while(True):
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
-        print("Enter 3 to view attendace for a specific course")
+        print("Enter 3 to view attendance for a specific course")
         print("Enter 4 to quit")
         ans = int(input())
         if(ans == 1):
@@ -88,6 +89,38 @@ def studentMenu():
                 print(tabulate(shortage, headers=['COURSE', 'PERCENTAGE']))
         elif(ans == 3):
             os.system('cls')
+            courses = []
+            stat1 = "SELECT DISTINCT(course_id) FROM timetable WHERE\
+                    program = '%s' AND dept_id = %d AND semester = %d"
+            mycursor.execute(stat1 % (global_prog, global_deptid, global_sem))
+            printer = []
+            count = 0
+            for i in mycursor:
+                if(i[0] == '-'):
+                    continue
+                count += 1
+                courses.append(i[0])
+                printer.append([count, i[0]])
+            print(tabulate(printer, headers=['SNo.', 'Course Code']))
+            print("Enter which course using the serial number")
+            ans = int(input())
+            course = courses[ans-1]
+            stat2 = "SELECT DATE, STATUS FROM %s WHERE\
+                    ROLLNO = %d"
+            tname = global_prog + "_" + str(global_deptid) + "_" + str(global_sem) + "_" + course
+            mycursor.execute(stat2 %(tname, global_rollno))
+            printer = []
+            for i in mycursor:
+                cur_date = i[0]
+                day, month, year = (int(x) for x in cur_date.split('-'))
+                eng_day = datetime.date(year, month, day).strftime("%A")
+                status = ''
+                if(i[1] == 1):
+                    status = 'Present'
+                else:
+                    status = 'Absent'
+                printer.append([cur_date, eng_day, status])
+            print(tabulate(printer, headers=['Date', 'Day', 'Status']))
         elif(ans == 4):
             break
         else:
@@ -171,14 +204,20 @@ def facultyMenu():
             count = (mycursor.fetchone())[0]
             stat4 = "SELECT COUNT(*) FROM %s WHERE rollno = %d AND (STATUS=1 OR STATUS = 2)"
             c = 0
+            shortage = []
             for i in students:
                 mycursor.execute(stat4 % (tname, i[0]))
                 scount = (mycursor.fetchone())[0]
                 pcent = (scount/count)*100
+                if(pcent < 85):
+                    shortage.append((students[c][0], pcent))
                 students[c].append(pcent)
                 c += 1
             head = ['RollNo', 'Percentage']
             print(tabulate(students, headers=head))
+            if(len(shortage) > 0):
+                print("Following students have a shortage of attendance")
+                print(tabulate(shortage, headers=['Roll Number', 'Percentage']))
         elif(ans == 3):#mark attendance
             os.system('cls')
             courses = []
@@ -211,10 +250,10 @@ def facultyMenu():
                 students[c].append(status)
                 c += 1
             date='%d-%d-%d'
-            day = input("Enter the date\n")
+            day = input("Enter the day\n")
             month = input("Enter the month\n")
             year = input("Enter the year\n")
-            date = day + '-' + month + year
+            date = day + '-' + month + '-' + year
             stat3 = "INSERT INTO %s VALUES('%s', %d, %d)"
             for i in students:
                 mycursor.execute(stat3 % (tname, date, i[0], i[1]))
@@ -234,7 +273,8 @@ def adminMenu():
         print("Enter 3 to create the timtable")
         print("Enter 4 to add a new faculty")
         print("Enter 5 to view the faculties for a department")
-        print("Enter 6 to quit")
+        print("Enter 6 to get a consolidated list of students with attendance shortages")
+        print("Enter 7 to quit")
         ans = int(input())
         if(ans == 1):
             os.system('cls')
@@ -330,6 +370,58 @@ def adminMenu():
                 facmem.append([i[0], i[1]]) 
             print(tabulate(facmem, headers=['Faculty Id', 'Faculty Name']))
         elif(ans == 6):
+            stat1 = "SELECT DISTINCT program, dept_id, semester, course_id\
+                    FROM TIMETABLE"
+            mycursor.execute(stat1)
+            res = []
+            stat2 = "SELECT DISTINCT rollno FROM %s"
+            stat3 = "SELECT COUNT(DISTINCT(DATE)) FROM %s"
+            stat4 = "SELECT COUNT(*) FROM %s WHERE rollno = %d AND (STATUS=1 OR STATUS = 2)"
+            stat5 = "SELECT name FROM student WHERE rollnum = %d"
+            for i in mycursor:
+                if(i[3] == '-'):
+                    continue
+                res.append(i)
+            shortage_list = []
+            index = -1
+            for i in res:
+                index += 1
+                shortage_list.append([])
+                tname = i[0] + "_" + str(i[1]) + "_" + str(i[2]) + "_" + i[3]
+                rno = []
+                mycursor.execute(stat2 % tname)
+                for j in mycursor:
+                    rno.append([j[0]])
+                mycursor.execute(stat3 % tname)
+                count = (mycursor.fetchone())[0]
+                if(count == 0):
+                    continue
+                for j in rno:
+                    mycursor.execute(stat4 % (tname, j[0]))
+                    scount = (mycursor.fetchone())[0]
+                    pcent = (scount/count)*100
+                    if(pcent < 85):
+                        mycursor.execute(stat5 % j[0])
+                        name = (mycursor.fetchone())[0]
+                        shortage_list[index].append([j[0], name, pcent])
+            stat5 = "SELECT dept_name FROM department WHERE dept_id = %d"
+            with open('report.txt','w') as txtfile:
+                for i in range(0, len(shortage_list)):
+                    prog = res[i][0]
+                    dept_id = res[i][1]
+                    sem = res[i][2]
+                    course = res[i][3]
+                    mycursor.execute(stat5 % dept_id)
+                    dept_name = (mycursor.fetchone())[0]
+                    write_str = prog + " " + dept_name + " Semester - " + str(sem) + " " + course + "\n"
+                    txtfile.write(write_str)
+                    if(len(shortage_list[i]) == 0):
+                        txtfile.write("No students\n")
+                        continue
+                    txtfile.write(tabulate(shortage_list[i], headers=['Roll No', 'Name', 'Percentage']))
+                    txtfile.write("\n")
+            print("DONE! REPORT CREATED")
+        elif(ans == 7):
             break
         else:
             print("Enter a valid input\n")
