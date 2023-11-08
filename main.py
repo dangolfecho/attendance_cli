@@ -23,7 +23,8 @@ def studentMenu():
     while(True):
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
-        print("Enter 3 to quit")
+        print("Enter 3 to view attendace for a specific course")
+        print("Enter 4 to quit")
         ans = int(input())
         if(ans == 1):
             os.system('cls')
@@ -63,6 +64,7 @@ def studentMenu():
                 if(i[0] != '-'):
                     courses.append([i[0]])
             c = 0
+            shortage = []
             for i in courses:
                 tname = global_prog + "_" + str(global_deptid) + "_" + str(global_sem) + "_" + i[0]
                 stat3 = "SELECT COUNT(DISTINCT(DATE)) FROM %s"
@@ -76,10 +78,17 @@ def studentMenu():
                     c += 1
                     continue
                 pcent = (scount/count)*100
+                if(pcent < 85):
+                    shortage.append((courses[c][0], pcent))
                 courses[c].append(pcent)
                 c += 1
             print(tabulate(courses, headers=['COURSE', 'PERCENTAGE']))
+            if(len(shortage) > 0):
+                print("Attendance shortage in the following courses")
+                print(tabulate(shortage, headers=['COURSE', 'PERCENTAGE']))
         elif(ans == 3):
+            os.system('cls')
+        elif(ans == 4):
             break
         else:
             print("Enter a valid input\n")
