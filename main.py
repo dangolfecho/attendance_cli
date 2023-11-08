@@ -12,6 +12,14 @@ con = mysql.connector.connect(host='localhost', user = 'root', passwd = 'root',
 mycursor = con.cursor()
 
 global_username = ''
+attendance_req = 0
+
+def getAttendanceReq():
+    global attendance_req
+    stat = "SELECT pvalue FROM misc WHERE property='attendance-req'"
+    mycursor.execute(stat)
+    a = (mycursor.fetchone())[0]
+    attendance_req = int(a)
 
 def changepass():
     new = getpass.getpass("Enter the new password\n")
@@ -110,7 +118,7 @@ def studentMenu():
                     c += 1
                     continue
                 pcent = (scount/count)*100
-                if(pcent < 85):
+                if(pcent < attendance_req):
                     shortage.append((courses[c][0], pcent))
                 courses[c].append(pcent)
                 c += 1
@@ -243,7 +251,7 @@ def facultyMenu():
                 mycursor.execute(stat4 % (tname, i[0]))
                 scount = (mycursor.fetchone())[0]
                 pcent = (scount/count)*100
-                if(pcent < 85):
+                if(pcent < attendance_req):
                     shortage.append((students[c][0], pcent))
                 students[c].append(pcent)
                 c += 1
@@ -267,7 +275,10 @@ def facultyMenu():
                     passwd = "nvoc yrek yibu nbws"
                     s.login(username, passwd)
                     for i in range(0, len(shortage)):
-                        message = MIMEText("You only have " + str(shortage[i][1]) + "% attendance in " + course + ".\n85% is required to write the exams!")
+                        message = MIMEText("You only have " +
+                                str(shortage[i][1]) + "% attendance in " +
+                                course + ".\n",attendance_req,
+                                "% is required to write the exams!", sep='')
                         message['Subject'] = "Attendance Warning"
                         message['From'] = username
                         stat = "SELECT username from student WHERE rollnum = %d"
@@ -333,7 +344,7 @@ def adminMenu():
         print("Enter 2 to assign faculties to courses")
         print("Enter 3 to create the timetable")
         print("Enter 4 to add a new faculty to the Institute")
-        print("Enter 5 to view the faculties for a department")
+        print("Enter 5 to view the faculties belonging to a particular department")
         print("Enter 6 to get a consolidated list of students with attendance shortages")
         print("Enter 7 to change the password")
         print("Enter 8 to quit")
@@ -466,7 +477,7 @@ def adminMenu():
                     mycursor.execute(stat4 % (tname, j[0]))
                     scount = (mycursor.fetchone())[0]
                     pcent = (scount/count)*100
-                    if(pcent < 85):
+                    if(pcent < attendance_req):
                         mycursor.execute(stat5 % j[0])
                         name = (mycursor.fetchone())[0]
                         shortage_list[index].append([j[0], name, pcent])
@@ -496,6 +507,7 @@ def adminMenu():
 
 
 def accept():
+    getAttendanceReq()
     global global_username
     username = input("Enter the username\n")
     password = getpass.getpass("Enter the password\n")
@@ -530,5 +542,5 @@ def menu():
 
 if __name__ == '__main__':
     menu()
-    print("BEWARE : 85% attendance is necessary to write your exams!")
+    print("BEWARE : ", attendance_req, "% attendance is necessary to write your exams!", sep='')
     con.commit()
