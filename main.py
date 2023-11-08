@@ -4,11 +4,24 @@ import getpass
 import mysql.connector
 from tabulate import tabulate
 import datetime
+import smtplib
+
 con = mysql.connector.connect(host='localhost', user = 'root', passwd = 'root',
         database = 'student')
 mycursor = con.cursor()
 
 global_username = ''
+
+def changepass():
+    new = getpass.getpass("Enter the new password\n")
+    new1 = getpass.getpass("Re-enter the new password\n")
+    if(new == new1):
+        stat = "UPDATE login SET password = '%s' WHERE username='%s'"
+        mycursor.execute(stat % (new, global_username))
+        con.commit()
+        print("Password updated successfully!")
+    else:
+        print("Passwords don't match!")
 
 def studentMenu():
     os.system('cls')
@@ -24,8 +37,9 @@ def studentMenu():
     while(True):
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
-        print("Enter 3 to view attendance for a specific course")
-        print("Enter 4 to quit")
+        print("Enter 3 to view the attendance for a specific course")
+        print("Enter 4 to change your password")
+        print("Enter 5 to quit")
         ans = int(input())
         if(ans == 1):
             os.system('cls')
@@ -122,6 +136,8 @@ def studentMenu():
                 printer.append([cur_date, eng_day, status])
             print(tabulate(printer, headers=['Date', 'Day', 'Status']))
         elif(ans == 4):
+            changepass()
+        elif(ans == 5):
             break
         else:
             print("Enter a valid input\n")
@@ -136,8 +152,9 @@ def facultyMenu():
     while(True):
         print("Enter 1 to view the timetable")
         print("Enter 2 to view the attendance status")
-        print("Enter 3 to mark attendance")
-        print("Enter 4 to quit")
+        print("Enter 3 to mark the attendance")
+        print("Enter 4 to change your password")
+        print("Enter 5 to quit")
         ans = int(input())
         if(ans == 1):
             os.system('cls')
@@ -218,6 +235,28 @@ def facultyMenu():
             if(len(shortage) > 0):
                 print("Following students have a shortage of attendance")
                 print(tabulate(shortage, headers=['Roll Number', 'Percentage']))
+                print("Enter y if you want to send a warning email to the students")
+                ans1 = input()
+                if(ans1 == 'y'):
+                    s = smtplib.SMTP('smtp.gmail.com', 587)
+                    s.starttls()
+                    '''
+                    stat = "SELECT username FROM faculty\
+                    WHERE faculty_id = %d"
+                    mycursor.execute(stat % f_id)
+                    username = (mycursor.fetchone())[0]
+                    '''
+                    username = "gdgmusicoh4@gmail.com"
+                    passwd = "nvoc yrek yibu nbws"
+                    s.login(username, passwd)
+                    for i in range(0, len(shortage)):
+                        message = "You only have " + str(shortage[i][1]) + "% attendance in " + course + ".\n85% is required to write the exams!"
+                        stat = "SELECT username from student WHERE rollnum = %d"
+                        mycursor.execute(stat % shortage[i][0])
+                        addr = (mycursor.fetchone())[0]
+                        s.sendmail(username, addr, message)
+                    s.quit()
+                    print("Mails have been sent!")
         elif(ans == 3):#mark attendance
             os.system('cls')
             courses = []
@@ -260,6 +299,8 @@ def facultyMenu():
             print("DONE")
             con.commit()
         elif(ans == 4):
+            changepass()
+        elif(ans == 5):
             break
         else:
             print("Enter a valid input\n")
@@ -270,11 +311,12 @@ def adminMenu():
     while(True):
         print("Enter 1 to create a course")
         print("Enter 2 to assign faculties to courses")
-        print("Enter 3 to create the timtable")
+        print("Enter 3 to create the timetable")
         print("Enter 4 to add a new faculty")
         print("Enter 5 to view the faculties for a department")
         print("Enter 6 to get a consolidated list of students with attendance shortages")
-        print("Enter 7 to quit")
+        print("Enter 7 to change the password")
+        print("Enter 8 to quit")
         ans = int(input())
         if(ans == 1):
             os.system('cls')
@@ -422,6 +464,8 @@ def adminMenu():
                     txtfile.write("\n")
             print("DONE! REPORT CREATED")
         elif(ans == 7):
+            changepass()
+        elif(ans == 8):
             break
         else:
             print("Enter a valid input\n")
