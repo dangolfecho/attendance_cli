@@ -24,6 +24,22 @@ def changepass():
     else:
         print("Passwords don't match!")
 
+def getDeptList():
+        stat1 = "SELECT * FROM department"
+        mycursor.execute(stat1)
+        depts = []
+        for i in mycursor:
+            depts.append([i[0], i[1]])
+        print(tabulate(depts, headers=['Dept No', 'Department Name']))
+
+def getFacultyList(deptid):
+        stat2 = "SELECT faculty_id, faculty_name FROM faculty WHERE dept_id = %d ORDER BY faculty_id"
+        mycursor.execute(stat2 % deptid)
+        facmem = []
+        for i in mycursor:
+            facmem.append([i[0], i[1]]) 
+        print(tabulate(facmem, headers=['Faculty Id', 'Faculty Name']))
+
 def studentMenu():
     os.system('cls')
     stat = "SELECT * FROM student WHERE username = '%s'"
@@ -316,7 +332,7 @@ def adminMenu():
         print("Enter 1 to create a course")
         print("Enter 2 to assign faculties to courses")
         print("Enter 3 to create the timetable")
-        print("Enter 4 to add a new faculty")
+        print("Enter 4 to add a new faculty to the Institute")
         print("Enter 5 to view the faculties for a department")
         print("Enter 6 to get a consolidated list of students with attendance shortages")
         print("Enter 7 to change the password")
@@ -326,6 +342,7 @@ def adminMenu():
             os.system('cls')
             course_id = input("Enter the course id\n")
             title = input("Enter the course's title\n")
+            getDeptList()
             dept_id = int(input("Enter the department\n"))
             ccredits = int(input("Enter the number of credits\n"))
             ctype=input("Enter T for theory course and P for practical\n")
@@ -340,11 +357,13 @@ def adminMenu():
 
         elif(ans == 2):
             os.system('cls')
-            fac_id = int(input("Enter the faculty id\n"))
-            course_id = input("Enter the course id\n")
             program = input("Enter the program\n")
+            getDeptList()
             dept_id = int(input("Enter the department id\n"))
             semester = int(input("Enter the semester\n"))
+            course_id = input("Enter the course id\n")
+            getFacultyList(dept_id)
+            fac_id = int(input("Enter the faculty id\n"))
             stat = "INSERT INTO teaches VALUES(%d, '%s', '%s', %d, %d)"
             mycursor.execute(stat % (fac_id, course_id, program, dept_id, semester))
             print("Added!")
@@ -352,6 +371,7 @@ def adminMenu():
         elif(ans== 3):
             os.system('cls')
             prog = input("Enter the program name\n")
+            getDeptList()
             dept_id = int(input("Enter the department id\n"))
             sem = int(input("Enter the semester number\n"))
             table_name = prog + '_' + str(dept_id) + '_' + str(sem)
@@ -393,6 +413,7 @@ def adminMenu():
             fac_id = b[0] + 1
             #fac_id = int(input("Enter the faculty id\n"))
             name = input("Enter the name\n")
+            getDeptList()
             dept_id = int(input("Enter department id\n"))
             desig = input("Enter their designation\n")
             username = input("Enter their username\n")
@@ -403,7 +424,6 @@ def adminMenu():
         elif(ans == 5):
             stat1 = "SELECT * FROM department"
             mycursor.execute(stat1)
-            c = 0
             depts = []
             for i in mycursor:
                 depts.append([i[0], i[1]])
