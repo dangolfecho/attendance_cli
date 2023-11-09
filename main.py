@@ -5,6 +5,7 @@ import mysql.connector
 from tabulate import tabulate
 import datetime
 import smtplib
+import csv
 from email.mime.text import MIMEText
 
 con = mysql.connector.connect(host='localhost', user = 'root', passwd = 'root',
@@ -432,7 +433,9 @@ def adminMenu():
         print("Enter 5 to view the faculties belonging to a particular department")
         print("Enter 6 to get a consolidated list of students with attendance shortages")
         print("Enter 7 to change the password")
-        print("Enter 8 to quit")
+        print("Enter 8 to insert students")
+        print("Enter 9 to view the students of a batch")
+        print("Enter 10 to quit")
         ans = int(input())
         if(ans == 1):
             os.system('cls')
@@ -589,6 +592,36 @@ def adminMenu():
         elif(ans == 7):
             changepass()
         elif(ans == 8):
+            fname = input("Enter the file name\n")
+            prog = input("Enter the program name\n")
+            getDeptList()
+            dept_id = int(input("Enter the department id\n"))
+            sem = int(input("Enter the semester\n"))
+            stat1 = "INSERT INTO login VALUES('%s', 'pass', 1)"
+            stat2 = "INSERT INTO student VALUES('%s', %d, '%s', '%s', %d, %d)"
+            with open(fname, 'r', newline ='') as csvfile:
+                reader = csv.reader(csvfile, delimiter=',')
+                for row in reader:
+                    rno = row[0]
+                    name = row[1]
+                    email = str(rno) + "@iiitt.ac.in"
+                    mycursor.execute(stat1 % (email))
+                    con.commit()
+                    mycursor.execute(stat2 % (email, int(rno), name, prog, dept_id, sem))
+                    con.commit()
+            print("The students have been added!")
+        elif(ans == 9):
+            prog = input("Enter the program name\n")
+            getDeptList()
+            dept_id = int(input("Enter the department id\n"))
+            sem = int(input("Enter the semester\n"))
+            stat = "SELECT rollnum, name FROM STUDENT WHERE program = '%s' AND dept_id = %d AND semester = %d"
+            mycursor.execute(stat % (prog, dept_id, sem))
+            res = []
+            for i in mycursor:
+                res.append(i)
+            print(tabulate(res, headers=['Roll No', 'Name']))
+        elif(ans == 10):
             break
         else:
             print("Enter a valid input\n")
